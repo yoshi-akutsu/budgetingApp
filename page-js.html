@@ -1,0 +1,428 @@
+<script>
+    // Need to add push to Salesforce for the budget
+    // Need to choose the in-state or our-of-state option for tuition expenses
+    // Need to reformat schools and allow them to be exported
+    
+    let errorAlert = document.getElementById("danger");
+    let authLink = document.getElementById("auth");
+    let authDiv = document.getElementById("authenticate");
+    let searchButton = document.getElementById("searchButton");
+    let searchBar = document.getElementById("searchTerm");
+    let resultBox = document.getElementById("resultBox");
+    let searchBox = document.querySelector(".searchBox");
+    let table = document.getElementById("applications");
+    let newApplicationButton = document.getElementById("plus");
+    let newSchoolSearchBox = document.getElementById("schoolSearch");
+    let schoolSearchButton = document.getElementById("findSchool");
+    let schoolToSearch = document.getElementById("schoolName");
+    let schoolResults = document.getElementById("schoolResults");
+    
+    let loadingDiv = document.getElementById('loading');
+    let budgetBox = document.getElementById("annualBudget");
+    let contactArray = [];
+    let selected;
+    let contact;
+  
+    // Gets the OAuth2 link
+    google.script.run.withSuccessHandler(callback).showSidebar();
+  
+    // Makes request after verification
+    searchButton.addEventListener("click", () => {
+      killTheKids(resultBox);
+      let searchTerm = searchBar.value;
+      google.script.run.withSuccessHandler(printResults).makeRequest(searchTerm, "search", "Contact");
+    })
+  
+    schoolSearchButton.addEventListener("click", () => {
+      showSpinner();
+      killTheKids(schoolResults);
+      schoolResults.style.display = "block";
+      let schoolSearchTerm = schoolToSearch.value;
+      schoolToSearch.value = "";
+      
+      try {
+        google.script.run.withSuccessHandler(printSchoolResults).withFailureHandler(handleError).makeRequest(schoolSearchTerm, "search", "Account", "0123h000000tvrfAAA");
+      } catch (err) {
+        console.log(err);
+      }
+    })
+  
+    // Updates link to Salesforce Authentication
+    function callback(link) {
+      authDiv.style.display = "block"
+      authLink.href = link;
+      authLink.addEventListener("click", () => {
+        authDiv.style.display = "none";
+        searchBox.style.display = "block";
+      })
+    }
+  
+    function getAdvisor(id) {
+      let name;
+      switch (id) {
+        case id = "0033h00000BTu8XAAT": 
+          return "Yoshi Akutsu";
+        case id = "0033h00000BTu8YAAT": 
+          return "Juleanna Smith";
+        case id = "0033h00000EuKDwAAN": 
+          return "Sam Rubinoski";
+        case id = "0033h00000BTuB2AAL": 
+          return "Emma Mote";
+        case id = "0033h00000CnQ8UAAV": 
+          return "Hannah Laubach";
+        case id = "0033h00000Eua7pAAB": 
+          return "Siân Lewis";
+        case id = "0033h00000EuKEtAAN": 
+          return "Alecea Howell";
+        case id = "0033h00000EuKDiAAN": 
+          return "Eric Martinez";
+        case id = "0033h00000EuKDxAAN": 
+          return "Reilly Grealis";
+        case id = "0033h00000mYaENAA0": 
+          return "Alex Horn";
+        case id = "0033h00000mYaFVAA0": 
+          return "Lydia Crannell";
+        case id = "0033h00000mYaErAAK": 
+          return "Drake Hankins";
+        case id = "0033h00000mYaEhAAK": 
+          return "Sarah Cook";
+        // ADD NEW ADVISORS HERE
+        //case id == "": 
+          //return "";
+      }
+    }
+  
+    function printBudget(contactInfo) {
+      budgetBox.style.display = "block";
+      console.log(contactInfo);
+      let sldData = document.getElementById("sld");
+      let sopData = document.getElementById("sop");
+      let fopData = document.getElementById("fop");
+      sldData.value = contactInfo.Annual_SLD__c;
+      sopData.value = contactInfo.Annual_SOP__c;
+      fopData.value = contactInfo.Annual_FOP__c;
+  
+      let sldCells = document.querySelectorAll(".SLD");
+      sldCells.forEach(cell => {
+        cell.textContent = sldData.value;
+      })
+      let sopCells = document.querySelectorAll(".SOP");
+      sopCells.forEach(cell => {
+        cell.textContent = sopData.value;
+      })
+      let fopCells = document.querySelectorAll(".FOP");
+      fopCells.forEach(cell => {
+        cell.textContent = fopData.value;
+      })
+      let familyBudgetCells = document.querySelectorAll(".familyBudget");
+      familyBudgetCells.forEach(cell => {
+        cell.textContent = (Number(sldData.value) + Number(sopData.value) + Number(fopData.value));
+      })
+      let totalCells = document.querySelectorAll(".total");
+      totalCells.forEach(cell => {
+        let parent = cell.parentElement;
+        cell.textContent = (Number(parent.children[2].textContent)*4);
+      })
+  
+      sldData.addEventListener("change", ()=> {
+        handleChange();
+      })
+      sopData.addEventListener("change", ()=> {
+        handleChange();
+      })
+      fopData.addEventListener("change", ()=> {
+        handleChange();
+      })
+  
+      newSchoolSearchBox.style.display = "block";
+      hideSpinner();
+    }
+  
+    function handleChange(factor, familyBudgetData, gapDifferenceData, tcoaData) {
+      if (factor === true) {
+        let familyBudgets = document.querySelectorAll(".familyBudget");
+        familyBudgetData.textContent = familyBudgets[0].textContent;
+        gapDifferenceData.textContent = (Number(tcoaData.textContent) - Number(familyBudgetData.textContent));
+  
+  
+      }
+      else {
+        let sldData = document.getElementById("sld");
+        let sopData = document.getElementById("sop");
+        let fopData = document.getElementById("fop");
+        let sldCells = document.querySelectorAll(".SLD");
+        sldCells.forEach(cell => {
+          cell.textContent = sldData.value;
+        })
+        let sopCells = document.querySelectorAll(".SOP");
+        sopCells.forEach(cell => {
+          cell.textContent = sopData.value;
+        })
+        let fopCells = document.querySelectorAll(".FOP");
+        fopCells.forEach(cell => {
+          cell.textContent = fopData.value;
+        })
+        let familyBudgetCells = document.querySelectorAll(".familyBudget");
+        familyBudgetCells.forEach(cell => {
+          cell.textContent = (Number(sldData.value) + Number(sopData.value) + Number(fopData.value));
+        })
+        let totalCells = document.querySelectorAll(".total");
+        totalCells.forEach(cell => {
+          let parent = cell.parentElement;
+          cell.textContent = (Number(parent.children[2].textContent)*4);
+        })
+      }
+    }
+  
+    function printSchool(name, website, city, state, id) {
+        let div = document.createElement("div");
+        div.classList.add("schoolItem");
+        div.id = id;
+        div.setAttribute("name", name)
+        div.textContent = name;
+  
+        let websiteP = document.createElement("p");
+        websiteP.textContent = "Website: " + website;
+        div.appendChild(websiteP);
+  
+        let cityP = document.createElement("p");
+        cityP.textContent = "City: " + city;
+        div.appendChild(cityP);
+  
+        let stateP = document.createElement("p");
+        stateP.textContent = "State: " + state;
+        div.appendChild(stateP);
+  
+        schoolResults.appendChild(div);
+      }
+  
+    function activateOptions() {
+      let results = document.querySelectorAll(".contact");
+      results.forEach(result => result.addEventListener("click", () => {
+        killTheKids(resultBox);
+        searchBox.style.display = "none";
+        selected = result.getAttribute("position");
+        google.script.run.withSuccessHandler(printBudget).makeRequest(result.id, "contact");
+        showSpinner();
+        // table.style.display = "block";
+      }))
+    }
+  
+  
+    function killTheKids(div){
+      while (div.firstChild) {
+          div.removeChild(div.firstChild);
+      }
+      return;
+    }
+  
+    function printBox(name, classYear, advisorId, sfId, fullJson, iteration) {
+      contactArray.push(fullJson);
+      let contactOption = document.createElement("div");
+      contactOption.setAttribute("position", iteration);
+      contactOption.classList.add("contact");
+      contactOption.id = sfId;
+  
+      let nameItem = document.createElement("p");
+      let nameItemNode = document.createTextNode("Name: " + name);
+      nameItem.appendChild(nameItemNode);
+      contactOption.appendChild(nameItem);
+  
+      let classYearItem = document.createElement("p");
+      let classYearItemNode = document.createTextNode("Class Year: " + classYear);
+      classYearItem.appendChild(classYearItemNode);
+      contactOption.appendChild(classYearItem);  
+  
+      let advisorItem = document.createElement("p");
+      let advisorName = getAdvisor(advisorId);
+      let advisorItemNode = document.createTextNode("Advisor: " + advisorName);
+      advisorItem.appendChild(advisorItemNode);
+      contactOption.appendChild(advisorItem);
+  
+      resultBox.appendChild(contactOption)
+    }
+  
+    function printSchoolResults(schools) {
+      // Add schools to school results and add event listener to all to use as options to create a new application from
+      for (let i = 0; i < schools.length; i++) {
+        let name = schools[i].Name;
+        let website = schools[i].Website;
+        let city = schools[i].BillingCity;
+        let state = schools[i].BillingState;
+        let id = schools[i].Id;
+        printSchool(name, website, city, state, id);
+      }
+      hideSpinner();
+      let resultsList = document.querySelectorAll(".schoolItem").forEach(school => {
+        school.addEventListener("click", () => {
+          killTheKids(school);
+          schoolResults.style.display = "none"
+          // newSchoolSearchBox.style.display = "none";
+          google.script.run.withSuccessHandler(printSchoolBudget).makeRequest(school.id, "account");
+        })
+      })
+    }
+  
+    function printSchoolBudget(school) {
+      console.log(school);
+      let schoolCompareBox = document.getElementById("schoolComparison");
+  
+      let targetRow = schoolCompareBox.children.length;
+      if (schoolCompareBox.children[targetRow - 1].children.length == 3) {
+        targetRow += 1;
+        let newRow = document.createElement("div");
+        newRow.classList.add("row");
+        schoolCompareBox.appendChild(newRow);
+      }
+      let newCol = document.createElement("div");
+      newCol.classList.add("col-4");
+      // Add elements to the school compare box here
+      let table = document.createElement("table");
+      table.classList.add("table-striped");
+      let tableHead = document.createElement("thead");
+      let tableBody = document.createElement("tbody");
+  
+      let headerRow = document.createElement("tr");
+      let th = document.createElement("th");
+      let schoolName = document.createElement("th");
+      schoolName.textContent = school.Name;
+      schoolName.setAttribute("scope", "col");
+  
+      headerRow.appendChild(th);
+      headerRow.appendChild(schoolName);
+      tableHead.appendChild(headerRow);
+      table.appendChild(tableHead);
+  
+      let tuitionRow = document.createElement("tr");
+      let tuitionLabel = document.createElement("th");
+      tuitionLabel.setAttribute("scope", "row");
+      tuitionLabel.textContent = "Tuition";
+      let tuitionData = document.createElement("td");
+      tuitionData.textContent = school.Out_of_State_Tuition__c;
+      tuitionRow.appendChild(tuitionLabel);
+      tuitionRow.appendChild(tuitionData);
+      tableBody.appendChild(tuitionRow);
+  
+      let roomBoardRow = document.createElement("tr");
+      let roomBoardLabel = document.createElement("th");
+      roomBoardLabel.setAttribute("scope", "row");
+      roomBoardLabel.textContent = "Room & Board";
+      let roomBoardData = document.createElement("td");
+      roomBoardData.textContent = school.Room_and_Board__c;
+      roomBoardRow.appendChild(roomBoardLabel);
+      roomBoardRow.appendChild(roomBoardData);
+      tableBody.appendChild(roomBoardRow);
+  
+      let booksRow = document.createElement("tr");
+      let booksLabel = document.createElement("th");
+      booksLabel.setAttribute("scope", "row");
+      booksLabel.textContent = "Books & Supplies";
+      let booksData = document.createElement("td");
+      booksData.textContent = school.Books_and_Supplies__c;
+      booksRow.appendChild(booksLabel);
+      booksRow.appendChild(booksData);
+      tableBody.appendChild(booksRow);
+  
+      let coaRow = document.createElement("tr");
+      let coaLabel = document.createElement("th");
+      coaLabel.setAttribute("scope", "row");
+      coaLabel.textContent = "Cost of Attendance";
+      let coaData = document.createElement("td");
+      coaData.textContent = (Number(booksData.textContent) + Number(roomBoardData.textContent) + Number(tuitionData.textContent));
+      coaRow.appendChild(coaLabel);
+      coaRow.appendChild(coaData);
+      tableBody.appendChild(coaRow);
+  
+      let financialAidRow = document.createElement("tr");
+      let financialAidLabel = document.createElement("th");
+      financialAidLabel.setAttribute("scope", "row");
+      financialAidLabel.textContent = "Financial Aid";
+      let financialAidData = document.createElement("td");
+      let financialAidInput = document.createElement("input");
+      financialAidInput.classList.add("form-control");
+      financialAidInput.setAttribute("type", "number");
+      financialAidData.appendChild(financialAidInput);
+      financialAidInput.value = 0;
+      financialAidRow.appendChild(financialAidLabel);
+      financialAidRow.appendChild(financialAidData);
+      tableBody.appendChild(financialAidRow);
+  
+      let tcoaRow = document.createElement("tr");
+      let tcoaLabel = document.createElement("th");
+      tcoaLabel.setAttribute("scope", "row");
+      tcoaLabel.textContent = "True Cost of Attendance";
+      let tcoaData = document.createElement("td");
+      tcoaData.textContent = (Number(coaData.textContent) - Number(financialAidInput.value));
+      tcoaRow.appendChild(tcoaLabel);
+      tcoaRow.appendChild(tcoaData);
+      tableBody.appendChild(tcoaRow);
+  
+      let familyBudgetRow = document.createElement("tr");
+      let familyBudgetLabel = document.createElement("th");
+      familyBudgetLabel.setAttribute("scope", "row");
+      familyBudgetLabel.textContent = "Family Budget";
+      let familyBudgetData = document.createElement("td");
+      let familyBudgets = document.querySelectorAll(".familyBudget");
+  
+      familyBudgetData.textContent = familyBudgets[0].textContent;
+      familyBudgetRow.appendChild(familyBudgetLabel);
+      familyBudgetRow.appendChild(familyBudgetData);
+      tableBody.appendChild(familyBudgetRow);
+  
+      let gapDifferenceRow = document.createElement("tr");
+      let gapDifferenceLabel = document.createElement("th");
+      gapDifferenceLabel.setAttribute("scope", "row");
+      gapDifferenceLabel.textContent = "Gap Difference";
+      let gapDifferenceData = document.createElement("td");
+      gapDifferenceData.textContent = (Number(tcoaData.textContent) - Number(familyBudgetData.textContent));
+      gapDifferenceRow.appendChild(gapDifferenceLabel);
+      gapDifferenceRow.appendChild(gapDifferenceData);
+      tableBody.appendChild(gapDifferenceRow);
+  
+      table.appendChild(tableBody);
+      newCol.appendChild(table);
+  
+      financialAidInput.addEventListener("change", () => {
+        tcoaData.textContent = (Number(coaData.textContent) - Number(financialAidInput.value));
+        gapDifferenceData.textContent = (Number(tcoaData.textContent) - Number(familyBudgetData.textContent));
+      })
+  
+      schoolCompareBox.children[targetRow - 1].appendChild(newCol);
+      
+      let sldData = document.getElementById("sld");
+      let sopData = document.getElementById("sop");
+      let fopData = document.getElementById("fop");
+      sldData.addEventListener("change", ()=> {
+        handleChange(true, familyBudgetData, gapDifferenceData, tcoaData);
+      })
+      sopData.addEventListener("change", ()=> {
+        handleChange(true, familyBudgetData, gapDifferenceData, tcoaData);
+      })
+      fopData.addEventListener("change", ()=> {
+        handleChange(true, familyBudgetData, gapDifferenceData, tcoaData);
+      })
+      
+    }
+  
+    function handleError(err) {
+      errorAlert.textContent = "Something unexpected happened. Please refresh the page. If the issue persists please reach out to Yoshi with the following error message: " + err;
+      errorAlert.style.display = "block";
+      
+    }
+    // Prints out the contact results from the contact search
+    function printResults(json) {
+      hideSpinner();
+      for (let i = 0; i < json.length; i++) {   
+        printBox(json[i].Name, json[i].Class_Year__c, json[i].Client_Advisor__c, json[i].Id, json[i], i)
+      }
+      activateOptions();
+    }
+  
+    function showSpinner() {
+      loadingDiv.style.visibility = 'visible';
+    }
+  
+    function hideSpinner() {
+      loadingDiv.style.visibility = 'hidden';
+    }
+  </script>

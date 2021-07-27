@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <?!= include("page-css"); ?>
+  </head>
+  <body>
+    <div class="alert alert-danger" id="danger" role="alert" style="display:none;">This is a danger alert—check it out!</div>
+    <div id="banner">
+      <img src="https://lh3.googleusercontent.com/uUmO46OEXIPsx3xffq-YWiAS2S7Hb5HnXA2TvpM1rdYffQrDizLpcvLE_u6jWNIUX2M3DFtrElH48Jkl_lHhFmFSy_nNTe8F84AxJ7pJdnTDkKZi9-6KrXaBcJ-aYR09NiNuxg8C9A=w2400"></img> 
+      <div id="annualBudget" style="display:none;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Year</th>
+              <th scope="col">1</th>
+              <th scope="col">2</th>
+              <th scope="col">3</th>
+              <th scope="col">4</th>
+              <th scope="col">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Student Loan Debt</th>
+              <td><input id="sld" class="form-control" type="number"></input></td>
+              <td class="SLD"></td>
+              <td class="SLD"></td>
+              <td class="SLD"></td>
+              <td class="total"></td>
+            </tr>
+            <tr>
+              <th scope="row">Student Out of Pocket</th>
+              <td><input id="sop" class="form-control" type="number"></input></td>
+              <td class="SOP"></td>
+              <td class="SOP"></td>
+              <td class="SOP"></td>
+              <td class="total"></td>
+            </tr>
+            <tr>
+              <th scope="row">Family Out of Pocket</th>
+              <td><input id="fop" class="form-control" type="number"></input></td>
+              <td class="FOP"></td>
+              <td class="FOP"></td>
+              <td class="FOP"></td>
+              <td class="total"></td>
+            </tr>
+            <tr>
+              <th scope="row">Family Budget</th>
+              <td id="budget" class="familyBudget"></td>
+              <td class="familyBudget"></td>
+              <td class="familyBudget"></td>
+              <td class="familyBudget"></td>
+              <td class="total"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div> 
+    </div>
+    
+    <div class="header">
+      <div id="authenticate" style="display:none;">
+        <h3>Click here to authorize this app with Salesforce.</h3>
+        <a id="auth" href="" target="_blank">Authorize</a>
+      <br>
+      </div>
+    </div>
+    <div class="searchBox">
+      <label for="searchTerm">Find your student:</label><br>
+      <input class="form-control" type="text" id="searchTerm" placeholder="Jane Doe"></input>
+      <button type="button" class="btn btn-primary" id="searchButton" onClick="showSpinner()">Search</button>
+    </div>
+
+    
+    <div id="schoolSearch" style="display:none">
+      <input style="display: inline-block;" class="form-control" id="schoolName" type="text" placeholder="Blue Mountain State U"></input>
+      <button style="display: inline-block;" class="btn btn-primary" id="findSchool">Go</button>
+    </div>
+
+    <div class="container-fluid" id="schoolComparison">
+      <div class="row"></div>
+    </div>
+    <div class="container"> 
+      <div id="loading" class="loading" onClick="hideSpinner()">Loading&#8230;</div>
+    </div>
+    <div id="schoolResults" class="container"></div>
+
+    <div id="resultBox" class="container"></div>
+
+    <?!= include("page-js"); ?>
+  </body>
+</html>
