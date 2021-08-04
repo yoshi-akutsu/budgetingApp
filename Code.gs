@@ -2,17 +2,17 @@
 function makeRequest(searchTerm, searchType, object, recordTypeId) {
   let salesforceService = getSalesforceService();
 
-  let orgBase = "INSTANCE.my.salesforce.com/";
+  let orgBase = "https://INSTANCE.my.salesforce.com/";
   // Gets API call url
   let url;
   if (searchType == "search") {
-    url = "INSTANCE.my.salesforce.com/services/data/v51.0/parameterizedSearch/?q=" + removeSpaces(searchTerm) + "&sobject=" + object;
+    url = "https://INSTANCE.my.salesforce.com/services/data/v51.0/parameterizedSearch/?q=" + removeSpaces(searchTerm) + "&sobject=" + object;
     if (recordTypeId) {
       url += "&" + object + ".where=RecordTypeId='" + recordTypeId + "'";
     } 
   }
   else {
-    url = "INSTANCE.my.salesforce.com/services/data/v51.0/sobjects/"  + searchType + "/" + searchTerm;
+    url = "https://INSTANCE.my.salesforce.com/services/data/v51.0/sobjects/"  + searchType + "/" + searchTerm;
   }
   let response = UrlFetchApp.fetch(url, {
     headers: {
@@ -50,6 +50,49 @@ function removeSpaces(text) {
   return letters.join("");
 }
 
+function pushToSalesforce(payload, contact) {
+  let salesforceService = getSalesforceService();
+  let url = "https://INSTANCE.my.salesforce.com/services/data/v51.0/sobjects/Contact/" + contact.Id;
+  Logger.log(contact);
+  let contactPayload = payload;
+
+  let response = UrlFetchApp.fetch(url, {
+    'method' : 'patch',
+    'contentType': 'application/json',
+    'payload' : JSON.stringify(contactPayload),
+    headers: {
+      Authorization: 'Bearer ' + salesforceService.getAccessToken()},
+    })
+}
+function pushToSheets(url, budgetData, schoolData) {
+  let array = url.split("/");
+  let spreadsheetId; 
+  for (let i = 0; i < array.length; i++) {
+    if (array[i] == "d") {
+      spreadsheetId = array[i + 1];
+    }
+  }
+  let spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+  let sheets = spreadsheet.getSheets();
+  let sheet;
+  for (let i = 0; i < sheets.length; i++) {
+    if (sheets[i].getName().includes("udget")) {
+      sheet = sheets[i];
+      break;
+    }
+    else {
+      sheet = null;
+    }
+  }
+  if (sheet == null) {
+    sheet = spreadsheet.insertSheet("Family Budget");
+  }
+
+  // Find place to start changing data in sheet
+  let values = sheet.getDataRange().getValues();
+  
+
+}
 function getSalesforceService() {
   // Create a new service with the given name. The name will be used when
   // persisting the authorized token, so ensure it is unique within the
