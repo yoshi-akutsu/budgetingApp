@@ -6,8 +6,6 @@
   let searchBar = document.getElementById("searchTerm");
   let resultBox = document.getElementById("resultBox");
   let searchBox = document.querySelector(".searchBox");
-  //let table = document.getElementById("applications");
-  //let newApplicationButton = document.getElementById("plus");
   let newSchoolSearchBox = document.getElementById("schoolSearch");
   let schoolSearchButton = document.getElementById("findSchool");
   let schoolToSearch = document.getElementById("schoolName");
@@ -18,8 +16,10 @@
   let loadingDiv = document.getElementById('loading');
   let budgetBox = document.getElementById("annualBudget");
   let studentInfo = document.getElementById("studentInfo");
+  let closePrompt = document.getElementById("closePrompt");
   let fourYearTable = document.getElementById("fourYearTable");
   let startingSalary = document.getElementById("startingSalary");
+  let sheetUrl = document.getElementById("sheetUrl");
   let contactArray = [];
   let selected;
   let contact;
@@ -50,12 +50,19 @@
     }
   })
 
+  closePrompt.addEventListener("click", () => {
+    urlPrompt.style.display = "none";
+    urlInput.value = "";
+  })
+
   backButton.addEventListener("click", () => {
     let schoolCompareBox = document.getElementById("schoolComparison");
     killTheKids(schoolCompareBox);
     killTheKids(schoolResults);
     killTheKids(resultBox);
     printBudget({});
+    sheetUrl.value = "";
+    urlPrompt.style.display = "none";
     startingSalary.value = "";
     while (fourYearTable.rows[0].cells.length != 6) {
       if (fourYearTable.rows[0].cells.length < 6) {
@@ -94,10 +101,12 @@
 
   pushToSheets.addEventListener("click", () => {
     urlPrompt.style.display = "block";
+    window.scrollTo(0,0);
   });
 
   let urlSubmit = document.getElementById("urlSubmit");
   urlSubmit.addEventListener("click", () => {
+
     let url = document.getElementById("sheetUrl").value;
     if (url != null) {
       let sldData = document.getElementById("sld");
@@ -105,6 +114,7 @@
       let fopData = document.getElementById("fop");
 
       let budgetData = [sldData.value, sopData.value, fopData.value];
+      let numYears = fourYearTable.rows[0].cells.length - 2;
       let schoolData = [];
 
       let rows = document.querySelectorAll(".col-4 table tr");
@@ -119,10 +129,11 @@
         }
       }
       console.log(schoolData);
+      console.log(numYears);
       console.log(budgetData);
       urlPrompt.style.display = "none";
       showSpinner();
-      google.script.run.withSuccessHandler(hideSpinner).withFailureHandler(handleError).pushToSheets(url, budgetData, schoolData); 
+      google.script.run.withSuccessHandler(hideSpinner).withFailureHandler(handleError).pushToSheets(url, budgetData, numYears, schoolData, startingSalary.value); 
     } 
   })
 
@@ -355,8 +366,6 @@
       let familyBudgets = document.querySelectorAll(".familyBudget");
       familyBudgetData.textContent = familyBudgets[0].textContent;
       gapDifferenceData.textContent = (Number(tcoaData.textContent) - Number(familyBudgetData.textContent));
-
-
     }
     else {
       let sldData = document.getElementById("sld");
@@ -634,7 +643,7 @@
     gapDifferenceLabel.setAttribute("scope", "row");
     gapDifferenceLabel.textContent = "Gap Difference";
     let gapDifferenceData = document.createElement("td");
-    gapDifferenceData.textContent = (Number(tcoaData.textContent) - Number(familyBudgetData.textContent));
+    gapDifferenceData.textContent = Math.trunc((Number(tcoaData.textContent) - Number(familyBudgetData.textContent)));
     gapDifferenceRow.appendChild(gapDifferenceLabel);
     gapDifferenceRow.appendChild(gapDifferenceData);
     tableBody.appendChild(gapDifferenceRow);
